@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  whc-sites
+Transform:
+- AWS::Serverless-2016-10-31
+
+Resources:
+  # Each Lambda function is defined by properties:
+  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+
+  getSitesByLanguage:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/get-sites-by-lang.getSitesByLanguageHandler
+      Runtime: nodejs20.x
+      Architectures:
+      - arm64
+      MemorySize: 128
+      Timeout: 100
+      Description: 
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /api/countries
+            Method: GET
+
+  getSitesSummaryByCountry:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/get-sites-by-country.getSitesSummaryByCountryHandler
+      Runtime: nodejs20.x
+      Architectures:
+      - arm64
+      MemorySize: 128
+      Timeout: 100
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /api/countries/{country_name}/summary
+            Method: GET
+
+Outputs:
+  WebEndpoint:
+    Description: API Gateway endpoint URL for Prod stage
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+
+Globals:
+  Function:
+    LoggingConfig:
+      LogFormat: JSON
