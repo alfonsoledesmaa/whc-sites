@@ -1,3 +1,6 @@
 {
-    "httpMethod": "GET"
+    "httpMethod": "GET",
+    "queryStringParameters": {
+        "language": "fr"
+    }
 }
