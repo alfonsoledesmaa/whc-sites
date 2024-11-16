@@ -30,14 +30,12 @@ export const getSitesByLanguageHandler = async (event) => {
         throw new Error(`getSitesByLanguageHandler only accept GET method, you tried: ${event.httpMethod}`);
     }
 
-    console.info('received:', event);
-
     if (sitesData.length === 0) {
         await loadCSVData();
     }
 
     try {
-        const queryParams = params.queryStringParamerers || {};
+        const queryParams = event.queryStringParameters || {};
         const language = queryParams.language || 'en';
 
         // Determine language fields based on the `language` parameter
@@ -55,6 +53,16 @@ export const getSitesByLanguageHandler = async (event) => {
             region: site.region_en
         }));
 
+        const response = {
+            statusCode: 200,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(filteredData)
+        };
+
+        return response
+
     } catch (err) {
         const errorResponse = {
             statusCode: 500,
@@ -65,16 +73,4 @@ export const getSitesByLanguageHandler = async (event) => {
         };
         return errorResponse;
     }
-
-    const response = {
-        statusCode: 200,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(filteredData)
-    };
-
-    // All log statements are written to CloudWatch
-    console.info(`response from: ${event.path} statusCode: ${response.statusCode} body: ${response.body}`);
-    return response;
 }

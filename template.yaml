@@ -1,13 +1,10 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  whc-sites
+  WHC-Sites
 Transform:
 - AWS::Serverless-2016-10-31
 
 Resources:
-  # Each Lambda function is defined by properties:
-  # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-
   getSitesByLanguage:
     Type: AWS::Serverless::Function
     Properties:
