@@ -1,4 +1,73 @@
-# whc-sites
+# WHC-Sites
+
+## Overview
+
+![](./img/Infra.png)
+
+This infrastructure provides an API to interact with World Heritage site data stored in a CSV file. It uses AWS services to deliver a scalable and serverless solution for retrieving site information by language or by country summary.
+
+### Architecture Components
+
+1.-  **API Gateway**: Serves as the entry point for the API. It routes user requests to the appropriate Lambda function.
+
+2.-  **Lamnbda Functions**
+  * *getSitesByLanguage*: Retrieves site names and descriptions in the specified language. (en, es, fr).
+  * *getSitesSummaryByCountry*: Returns a summary of World Heritage sites for a specified country, including counts by site type (Cultural, Natural, Mixed).
+
+## API Endpoints
+
+### getSitesByLanguage
+This endpoint retrieves sites by language.
+
+- **URL**: `/api/countries`
+- **Method**: `GET`
+- **Description**: Retrieves a list of sites filtered by the specified language.
+
+#### Example Request
+```bash
+curl -X GET "https://api-gateway-url/stage/api/countries?language=es"
+````
+
+Example Response
+```json
+[
+    {
+        "id": "208",
+        "name": "Paisaje cultural y vestigios arqueológicos del Valle de Bamiyán",
+        "description": "<p>Este sitio es un exponente de las creaciones artísticas y religiosas características de la antigua Bactriana entre el siglo I y el XIII, en las que confluyeron distintas influencias culturales que desembocaron en la afirmación de la escuela de arte búdico del Gandhara. El sitio comprende varios conjuntos monásticos y santuarios budistas, así como edificios fortificados de la época islámica. El valle fue escenario de la trágica destrucción de las dos monumentales estatuas de Buda en pie, perpetrada por los talibanes en marzo de 2001, que causó una honda conmoción en el mundo entero.</p>",
+        "country": "Afghanistan",
+        "region": "Asia and the Pacific"
+    }
+]
+```
+
+### getSitesSummaryByCountry
+This endpoint retrieves sites by language.
+
+- **URL**: `/api/countries/{country_name}/summary`
+- **Method**: `GET`
+- **Description**: Retrieves a summary of sites for the specified country.
+
+#### Example Request
+```bash
+curl -X GET "https://api-gateway-url/stage/api/countries/USA/summary""
+````
+
+Example Response
+```json
+{
+  "country": "USA",
+  "total_sites": 10,
+  "sites": [
+    {
+      "id": "1",
+      "name": "Site Name",
+      "description": "Site Description"
+    },
+    ...
+  ]
+}
+```
 
 This project contains source code and supporting files for a serverless application that you can deploy with the AWS Serverless Application Model (AWS SAM) command line interface (CLI). It includes the following files and folders:
 
@@ -7,10 +76,7 @@ This project contains source code and supporting files for a serverless applicat
 - `__tests__` - Unit tests for the application code. 
 - `template.yaml` - A template that defines the application's AWS resources.
 
-## Deploy the sample application
-
-The AWS SAM CLI is an extension of the AWS CLI that adds functionality for building and testing Lambda applications. It uses Docker to run your functions in an Amazon Linux environment that matches Lambda. It can also emulate your application's build environment and API.
-
+## Deploy the API
 To use the AWS SAM CLI, you need the following tools:
 
 * AWS SAM CLI - [Install the AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html).
@@ -33,109 +99,3 @@ The first command will build the source of your application. The second command 
 * **Save arguments to samconfig.toml**: If set to yes, your choices will be saved to a configuration file inside the project, so that in the future you can just re-run `sam deploy` without parameters to deploy changes to your application.
 
 The API Gateway endpoint API will be displayed in the outputs when the deployment is complete.
-
-## Use the AWS SAM CLI to build and test locally
-
-Build your application by using the `sam build` command.
-
-```bash
-my-application$ sam build
-```
-
-The AWS SAM CLI installs dependencies that are defined in `package.json`, creates a deployment package, and saves it in the `.aws-sam/build` folder.
-
-Test a single function by invoking it directly with a test event. An event is a JSON document that represents the input that the function receives from the event source. Test events are included in the `events` folder in this project.
-
-Run functions locally and invoke them with the `sam local invoke` command.
-
-```bash
-my-application$ sam local invoke putItemFunction --event events/event-post-item.json
-my-application$ sam local invoke getAllItemsFunction --event events/event-get-all-items.json
-```
-
-The AWS SAM CLI can also emulate your application's API. Use the `sam local start-api` command to run the API locally on port 3000.
-
-```bash
-my-application$ sam local start-api
-my-application$ curl http://localhost:3000/
-```
-
-The AWS SAM CLI reads the application template to determine the API's routes and the functions that they invoke. The `Events` property on each function's definition includes the route and method for each path.
-
-```yaml
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /
-            Method: GET
-```
-
-## Add a resource to your application
-The application template uses AWS SAM to define application resources. AWS SAM is an extension of AWS CloudFormation with a simpler syntax for configuring common serverless application resources, such as functions, triggers, and APIs. For resources that aren't included in the [AWS SAM specification](https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md), you can use the standard [AWS CloudFormation resource types](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html).
-
-Update `template.yaml` to add a dead-letter queue to your application. In the **Resources** section, add a resource named **MyQueue** with the type **AWS::SQS::Queue**. Then add a property to the **AWS::Serverless::Function** resource named **DeadLetterQueue** that targets the queue's Amazon Resource Name (ARN), and a policy that grants the function permission to access the queue.
-
-```
-Resources:
-  MyQueue:
-    Type: AWS::SQS::Queue
-  getAllItemsFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: src/handlers/get-all-items.getAllItemsHandler
-      Runtime: nodejs20.x
-      DeadLetterQueue:
-        Type: SQS 
-        TargetArn: !GetAtt MyQueue.Arn
-      Policies:
-        - SQSSendMessagePolicy:
-            QueueName: !GetAtt MyQueue.QueueName
-```
-
-The dead-letter queue is a location for Lambda to send events that could not be processed. It's only used if you invoke your function asynchronously, but it's useful here to show how you can modify your application's resources and function configuration.
-
-Deploy the updated application.
-
-```bash
-my-application$ sam deploy
-```
-
-Open the [**Applications**](https://console.aws.amazon.com/lambda/home#/applications) page of the Lambda console, and choose your application. When the deployment completes, view the application resources on the **Overview** tab to see the new resource. Then, choose the function to see the updated configuration that specifies the dead-letter queue.
-
-## Fetch, tail, and filter Lambda function logs
-
-To simplify troubleshooting, the AWS SAM CLI has a command called `sam logs`. `sam logs` lets you fetch logs that are generated by your Lambda function from the command line. In addition to printing the logs on the terminal, this command has several nifty features to help you quickly find the bug.
-
-**NOTE:** This command works for all Lambda functions, not just the ones you deploy using AWS SAM.
-
-```bash
-my-application$ sam logs -n putItemFunction --stack-name sam-app --tail
-```
-
-**NOTE:** This uses the logical name of the function within the stack. This is the correct name to use when searching logs inside an AWS Lambda function within a CloudFormation stack, even if the deployed function name varies due to CloudFormation's unique resource name generation.
-
-You can find more information and examples about filtering Lambda function logs in the [AWS SAM CLI documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-logging.html).
-
-## Unit tests
-
-Tests are defined in the `__tests__` folder in this project. Use `npm` to install the [Jest test framework](https://jestjs.io/) and run unit tests.
-
-```bash
-my-application$ npm install
-my-application$ npm run test
-```
-
-## Cleanup
-
-To delete the sample application that you created, use the AWS CLI. Assuming you used your project name for the stack name, you can run the following:
-
-```bash
-sam delete --stack-name whc-sites
-```
-
-## Resources
-
-For an introduction to the AWS SAM specification, the AWS SAM CLI, and serverless application concepts, see the [AWS SAM Developer Guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html).
-
-Next, you can use the AWS Serverless Application Repository to deploy ready-to-use apps that go beyond Hello World samples and learn how authors developed their applications. For more information, see the [AWS Serverless Application Repository main page](https://aws.amazon.com/serverless/serverlessrepo/) and the [AWS Serverless Application Repository Developer Guide](https://docs.aws.amazon.com/serverlessrepo/latest/devguide/what-is-serverlessrepo.html).
