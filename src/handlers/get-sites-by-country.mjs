@@ -74,6 +74,23 @@ export const getSitesSummaryByCountryHandler = async (event) => {
             else if (type === "mixed") summary.mixed++;
         });
 
+        const response = {
+          country: countryName,
+          total_sites: countrySites.length,
+          site_counts: summary,
+          sites: countrySites.map(site => ({
+            id: site.id_no,
+            name: site.name_en,
+            region: site.region_en,
+          })),
+        };
+    
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(response),
+        };
+
     } catch (err) {
         const errorResponse = {
             statusCode: 500,
@@ -84,21 +101,4 @@ export const getSitesSummaryByCountryHandler = async (event) => {
         };
         return errorResponse;
     }
-
-    const response = {
-        country: countryName,
-        total_sites: countrySites.length,
-        site_counts: summary,
-        sites: countrySites.map(site => ({
-          id: site.id_no,
-          name: site.name_en,
-          region: site.region_en,
-        })),
-      };
-  
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(response),
-      };
 }
