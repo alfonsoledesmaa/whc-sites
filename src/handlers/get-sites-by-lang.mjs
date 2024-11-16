@@ -1,40 +1,15 @@
-import csv from 'csv-parser';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import path from 'path';
-
-// Determine the directory of the current module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Path to CSV data file
-const dataFilePath = path.resolve(__dirname, 'whc-sites.csv');
-let sitesData = [];
-
-function loadCSVData() {
-    return new Promise((resolve, reject) => {
-      const results = [];
-      fs.createReadStream(dataFilePath)
-        .pipe(csv())
-        .on('data', (data) => results.push(data))
-        .on('end', () => {
-          sitesData = results;
-          resolve();
-        })
-        .on('error', (error) => reject(error));
-    });
-  }
+import { loadCSVData } from './csvLoader.mjs';
 
 export const getSitesByLanguageHandler = async (event) => {
     if (event.httpMethod !== 'GET') {
         throw new Error(`getSitesByLanguageHandler only accept GET method, you tried: ${event.httpMethod}`);
     }
 
-    if (sitesData.length === 0) {
-        await loadCSVData();
-    }
-
     try {
+
+        // Retrieve CSV Data
+        const sitesData = await loadCSVData();
+
         const queryParams = event.queryStringParameters || {};
         const language = queryParams.language || 'en';
 
