@@ -5,6 +5,12 @@ Transform:
 - AWS::Serverless-2016-10-31
 
 Resources:
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Name: WHC-Sites
+
   getSitesByLanguage:
     Type: AWS::Serverless::Function
     Properties:
@@ -19,8 +25,11 @@ Resources:
         Api:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGatewayApi
             Path: /api/countries
             Method: GET
+            Auth:
+              ApiKeyRequired: true
 
   getSitesSummaryByCountry:
     Type: AWS::Serverless::Function
@@ -35,13 +44,43 @@ Resources:
         Api:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGatewayApi
             Path: /api/countries/{country_name}/summary
             Method: GET
+            Auth:
+              ApiKeyRequired: true
+
+  ApiGatewayApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Name: WHC-Sites-ApiKey
+      Enabled: true
+      StageKeys:
+        - RestApiId: !Ref ApiGatewayApi
+          StageName: prod
+
+  ApiGatewayUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      UsagePlanName: WHC-Sites-Usa gePlan
+      ApiStages:
+        - ApiId: !Ref ApiGatewayApi
+          Stage: prod
+      Throttle:
+        BurstLimit: 100
+        RateLimit: 50
+
+  ApiGatewayUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ApiGatewayApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref ApiGatewayUsagePlan
 
 Outputs:
   WebEndpoint:
     Description: API Gateway endpoint URL for Prod stage
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
 
 Globals:
   Function:
